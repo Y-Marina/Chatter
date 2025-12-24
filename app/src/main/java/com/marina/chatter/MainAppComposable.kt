@@ -5,7 +5,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.marina.chatter.feature.auth.signin.SignInScreen
+import com.marina.chatter.feature.auth.signup.SignUpScreen
 
 @Composable
 fun MainApp() {
@@ -14,6 +17,13 @@ fun MainApp() {
         NavHost(
             navController = navController,
             startDestination = "login"
-        ) {}
+        ) {
+            composable("login") {
+                SignInScreen(navController)
+            }
+            composable("signup") {
+                SignUpScreen(navController)
+            }
+        }
     }
 }
