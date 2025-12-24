@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "810389660010",
+    "project_id": "chatter-ca50d",
+    "storage_bucket": "chatter-ca50d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810389660010:android:7f67c5b563bf19ecf34513",
+        "android_client_info": {
+          "package_name": "com.marina.chatter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeB2-lfddimZtjUEvZzdcBSQC0syZcc-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
