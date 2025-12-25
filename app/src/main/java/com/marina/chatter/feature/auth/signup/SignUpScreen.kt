@@ -25,8 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.marina.chatter.R
+import com.marina.chatter.feature.auth.signin.SignInViewModel
+import kotlin.jvm.Throws
 
 @Composable
 fun SignUpScreen(navController: NavController) {
@@ -103,6 +106,7 @@ fun SignUpScreen(navController: NavController) {
                         confirm.isNotEmpty() &&
                         password == confirm
             ) {
+//                throw RuntimeException("this is test")
                 Text(text = "Sign Un")
             }
 
