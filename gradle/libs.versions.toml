@@ -11,7 +11,7 @@ activityCompose = "1.8.0"
 composeBom = "2024.09.00"
 dagger-hilt = "2.57.1"
 hilt-compose = "1.3.0"
-firebaseCrashlitics = "20.0.3"
+firebaseCrashlitics = "2.9.9"
 coil = "2.7.0"
 material3Android = "1.4.0"
 #firebaseAuthKtx = "24.0.1"
@@ -37,7 +37,7 @@ dagger-hilt-android = { module = "com.google.dagger:hilt-android", version.ref =
 dagger-hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger-hilt" }
 dagger-hilt-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-compose" }
 
-firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlitics", version.ref = "firebaseCrashlitics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlitics" }
 #firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 
 coil = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
