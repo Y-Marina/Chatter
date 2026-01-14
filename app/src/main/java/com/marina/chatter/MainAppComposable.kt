@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.marina.chatter.feature.auth.signin.SignInScreen
 import com.marina.chatter.feature.auth.signup.SignUpScreen
+import com.marina.chatter.feature.chat.ChatScreen
 import com.marina.chatter.feature.home.HomeScreen
 
 @Composable
@@ -31,6 +34,17 @@ fun MainApp() {
             }
             composable("home") {
                 HomeScreen(navController)
+            }
+            composable(
+                route = "chat/{channelId}",
+                arguments = listOf(
+                    navArgument("channelId") {
+                        type = NavType.StringType
+                    }
+                )
+            ) {
+                val channelId = it.arguments?.getString("channelId") ?: ""
+                ChatScreen(navController, channelId)
             }
         }
     }
