@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.marina.chatter.ui.theme.DarkGrey
-import org.checkerframework.checker.units.qual.cd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,8 +119,11 @@ fun HomeScreen(navController: NavController) {
 
                 items(channels.value) { channel ->
                     Column {
-                        ChannelItem(channel.name) {
-                            navController.navigate(("chat/${channel.id}"))
+                        ChannelItem(
+                            channelName = channel.name,
+                            modifier = Modifier.clip(RoundedCornerShape(16.dp))
+                        ) {
+                            navController.navigate(("chat/${channel.id}&${channel.name}"))
                         }
                     }
                 }
@@ -143,12 +145,14 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun ChannelItem(channelName: String, onClick: () -> Unit) {
+fun ChannelItem(
+    channelName: String,
+    modifier: Modifier,
+    onClick: () -> Unit
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp)
-            .clip(RoundedCornerShape(16.dp))
             .background(DarkGrey)
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
@@ -207,5 +211,5 @@ fun AddChannelDialog(onAddChannel: (String) -> Unit) {
 @Preview
 @Composable
 fun PreviewItem() {
-    ChannelItem(channelName = "Test Channel", {})
+    ChannelItem(channelName = "Test Channel", Modifier, {})
 }

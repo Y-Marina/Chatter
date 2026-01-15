@@ -1,8 +1,12 @@
 package com.marina.chatter.feature.chat
 
+import android.Manifest
+import android.net.Uri
+import android.os.Environment
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,12 +21,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -33,30 +36,88 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.marina.chatter.R
+import com.marina.chatter.feature.home.ChannelItem
 import com.marina.chatter.model.Message
 import com.marina.chatter.ui.theme.DarkGrey
 import com.marina.chatter.ui.theme.Purple
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun ChatScreen(navController: NavController, channelId: String) {
+fun ChatScreen(navController: NavController, channelId: String, channelName: String) {
     Scaffold(
         contentColor = Color.Black
     ) {
+        val viewModel: ChatViewModel = hiltViewModel()
+
+        val chooserDialog = remember {
+            mutableStateOf(false)
+        }
+
+        val cameraImageUri = remember {
+            mutableStateOf<Uri?>(null)
+        }
+
+        val cameraImageLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture()
+        ) { success ->
+            if (success) {
+                cameraImageUri.value?.let {
+                    viewModel.sendImageMessage(it, channelId)
+                }
+            }
+        }
+        val imageLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            uri?.let { viewModel.sendImageMessage(it, channelId) }
+        }
+
+        fun createImageUri(): Uri {
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val storageDir =
+                ContextCompat.getExternalFilesDirs(
+                    navController.context,
+                    Environment.DIRECTORY_PICTURES
+                ).first()
+            return FileProvider.getUriForFile(
+                navController.context,
+                "${navController.context.packageName}.provider",
+                File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir).apply {
+                    cameraImageUri.value = Uri.fromFile(this)
+                }
+            )
+        }
+
+        val permissionLauncher =
+            rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { isGranted ->
+                if (isGranted) {
+                    cameraImageLauncher.launch(createImageUri())
+                }
+            }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it)
         ) {
-            val viewModel: ChatViewModel = hiltViewModel()
             LaunchedEffect(key1 = true) {
                 viewModel.listenForMessages(channelId)
             }
@@ -66,6 +127,29 @@ fun ChatScreen(navController: NavController, channelId: String) {
                 messages = messages.value,
                 onSendMessage = { message ->
                     viewModel.sendMessage(channelId, message)
+                },
+                onImageClicked = {
+                    chooserDialog.value = true
+                },
+                channelName = channelName
+            )
+        }
+
+        if (chooserDialog.value) {
+            ContentSelectionDialog(
+                onCameraSelected = {
+                    chooserDialog.value = false
+                    if (navController.context.checkSelfPermission(Manifest.permission.CAMERA)
+                        == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    ) {
+                        cameraImageLauncher.launch(createImageUri())
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
+                onGallerySelected = {
+                    chooserDialog.value = false
+                    imageLauncher.launch("image/*")
                 }
             )
         }
@@ -73,9 +157,33 @@ fun ChatScreen(navController: NavController, channelId: String) {
 }
 
 @Composable
+fun ContentSelectionDialog(
+    onCameraSelected: () -> Unit,
+    onGallerySelected: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {
+            TextButton(onClick = onCameraSelected) {
+                Text(text = "Camera")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onGallerySelected) {
+                Text(text = "Gallery")
+            }
+        },
+        title = { Text(text = "Select your source?") },
+        text = { Text(text = "Would you like to pick an image from the gallery or use the camera") }
+    )
+}
+
+@Composable
 fun ChatMessages(
+    channelName: String,
     messages: List<Message>,
-    onSendMessage: (String) -> Unit
+    onSendMessage: (String) -> Unit,
+    onImageClicked: () -> Unit
 ) {
     val hideKeyboardController = LocalSoftwareKeyboardController.current
 
@@ -83,8 +191,11 @@ fun ChatMessages(
         mutableStateOf("")
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn {
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            item {
+                ChannelItem(channelName = channelName, modifier = Modifier) { }
+            }
             items(messages) { message ->
                 ChatBubble(message = message)
             }
@@ -93,12 +204,16 @@ fun ChatMessages(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
                 .background(DarkGrey)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { msg.value = "" }) {
+            IconButton(
+                onClick = {
+                    msg.value = ""
+                    onImageClicked()
+                }
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.attach),
                     contentDescription = "send"
@@ -169,13 +284,22 @@ fun ChatBubble(message: Message) {
                 Spacer(modifier = Modifier.width(8.dp))
             }
 
-            Text(
-                text = message.message.trim(),
-                color = Color.White,
+            Box(
                 modifier = Modifier
                     .background(color = bubbleColor, shape = RoundedCornerShape(8.dp))
                     .padding(16.dp)
-            )
+            ) {
+                if (message.imageUrl != null) {
+                    AsyncImage(
+                        model = message.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(text = message.message?.trim() ?: "", color = Color.White)
+                }
+            }
         }
     }
 }

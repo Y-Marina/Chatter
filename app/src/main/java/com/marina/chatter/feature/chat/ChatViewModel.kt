@@ -1,5 +1,6 @@
 package com.marina.chatter.feature.chat
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -20,7 +21,7 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     val message = _messages.asStateFlow()
     private val db = Firebase.database
 
-    fun sendMessage(channelID: String, messageText: String) {
+    fun sendMessage(channelID: String, messageText: String, image: String? = null) {
         val message = Message(
             id = db.reference.push().key ?: UUID.randomUUID().toString(),
             senderId = Firebase.auth.currentUser?.uid ?: "",
@@ -28,10 +29,14 @@ class ChatViewModel @Inject constructor() : ViewModel() {
             senderName = Firebase.auth.currentUser?.displayName ?: "",
             createAt = System.currentTimeMillis(),
             senderImage = null,
-            imageUrl = null
+            imageUrl = image
         )
 
         db.reference.child("messages").child(channelID).push().setValue(message)
+    }
+
+    fun sendImageMessage(uri: Uri, channelID: String) {
+
     }
 
     fun listenForMessages(channelID: String) {
